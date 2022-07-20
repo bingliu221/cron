@@ -33,7 +33,7 @@ func buildRound(min, max int, selectFunc IntSelector) *Round {
 	return NewRound(selected, min, max)
 }
 
-func New(task TaskFunc, selector TimeSelector) (*Cron, error) {
+func New(task TaskFunc, selector TimeSelector) *Cron {
 	r := &Cron{
 		task:     task,
 		location: time.Local,
@@ -50,7 +50,7 @@ func New(task TaskFunc, selector TimeSelector) (*Cron, error) {
 		r.location = selector.Location
 	}
 
-	return r, nil
+	return r
 }
 
 func (r *Cron) init() {
