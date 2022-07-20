@@ -55,7 +55,8 @@ func New(task TaskFunc, selector TimeSelector) *Cron {
 
 func (r *Cron) init() {
 	t := time.Now().In(r.location)
-	r.seconds.ShiftTo(t.Second())
+	// TODO: explain why +1 and tick backward
+	r.seconds.ShiftTo((t.Second() + 1) % 60)
 	r.seconds.TickBack()
 	r.minutes.ShiftTo(t.Minute())
 	r.hours.ShiftTo(t.Hour())
