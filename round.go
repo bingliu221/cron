@@ -30,13 +30,18 @@ func NewRound(values []int, min, max int) *Round {
 	return r
 }
 
-func (r *Round) Tick() bool {
-	r.index = (r.index + 1) % len(r.values)
-	return r.index == 0
-}
+type Direction int
 
-func (r *Round) TickBack() bool {
-	r.index = (r.index - 1) % len(r.values)
+const (
+	Forward  Direction = 1
+	Backward Direction = -1
+)
+
+func (r *Round) Tick(d Direction) bool {
+	r.index = (r.index + int(d)) % len(r.values)
+	if d == Forward {
+		return r.index == 0
+	}
 	return r.index == len(r.values)-1
 }
 

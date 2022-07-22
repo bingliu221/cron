@@ -55,9 +55,8 @@ func New(task TaskFunc, selector TimeSelector) *Cron {
 
 func (r *Cron) init() {
 	t := time.Now().In(r.location)
-	// TODO: explain why +1 and tick backward
+	// TODO: explain why +1
 	r.seconds.ShiftTo((t.Second() + 1) % 60)
-	r.seconds.TickBack()
 	r.minutes.ShiftTo(t.Minute())
 	r.hours.ShiftTo(t.Hour())
 	r.days.ShiftTo(t.Day())
@@ -65,28 +64,29 @@ func (r *Cron) init() {
 	// weekdays is only use for filtering
 	//r.weekdays.ShiftTo(int(t.Weekday()))
 	r.year = t.Year()
+	r.tick(Backward)
 }
 
 func (r *Cron) current() time.Time {
 	return time.Date(r.year, time.Month(r.months.Value()), r.days.Value(), r.hours.Value(), r.minutes.Value(), r.seconds.Value(), 0, r.location)
 }
 
-func (r *Cron) nextTick() time.Time {
-	carry := r.seconds.Tick()
+func (r *Cron) tick(d Direction) time.Time {
+	carry := r.seconds.Tick(d)
 	if carry {
-		carry = r.minutes.Tick()
+		carry = r.minutes.Tick(d)
 	}
 	if carry {
-		carry = r.hours.Tick()
+		carry = r.hours.Tick(d)
 	}
 	if carry {
 		for {
-			carry = r.days.Tick()
+			carry = r.days.Tick(d)
 			if carry {
-				carry = r.months.Tick()
+				carry = r.months.Tick(d)
 			}
 			if carry {
-				r.year += 1
+				r.year += int(d)
 			}
 			wd := r.current().Weekday()
 			if r.weekdays.Contains(int(wd)) {
@@ -100,7 +100,7 @@ func (r *Cron) nextTick() time.Time {
 func (r *Cron) Run(ctx context.Context) {
 	r.init()
 	for {
-		next := r.nextTick()
+		next := r.tick(Forward)
 		timer, cancel := context.WithDeadline(context.Background(), next)
 		select {
 		case <-ctx.Done():
