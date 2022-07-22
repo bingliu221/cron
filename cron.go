@@ -64,7 +64,9 @@ func (r *Cron) init() {
 	// weekdays is only use for filtering
 	//r.weekdays.ShiftTo(int(t.Weekday()))
 	r.year = t.Year()
-	r.tick(Backward)
+	if r.current().After(t) {
+		r.tick(Backward)
+	}
 }
 
 func (r *Cron) current() time.Time {
