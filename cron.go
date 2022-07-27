@@ -53,8 +53,7 @@ func New(task TaskFunc, selector TimeSelector) *Cron {
 	return r
 }
 
-func (r *Cron) init() {
-	t := time.Now().In(r.location)
+func (r *Cron) init(t time.Time) {
 	// TODO: explain why +1
 	r.seconds.ShiftTo((t.Second() + 1) % 60)
 	r.minutes.ShiftTo(t.Minute())
@@ -84,6 +83,15 @@ func (r *Cron) tick(d Direction) time.Time {
 	if carry {
 		for {
 			carry = r.days.Tick(d)
+			if !carry {
+				tmpDate := time.Date(r.year, time.Month(r.months.Value()), r.days.Value(), 0, 0, 0, 0, r.location)
+				if tmpDate.Month() != time.Month(r.months.Value()) {
+					// already another month
+					for !carry {
+						carry = r.days.Tick(d)
+					}
+				}
+			}
 			if carry {
 				carry = r.months.Tick(d)
 			}
@@ -100,7 +108,7 @@ func (r *Cron) tick(d Direction) time.Time {
 }
 
 func (r *Cron) Run(ctx context.Context) {
-	r.init()
+	r.init(time.Now().In(r.location))
 	for {
 		next := r.tick(Forward)
 		timer, cancel := context.WithDeadline(context.Background(), next)
